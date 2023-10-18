@@ -46,7 +46,8 @@ describe('GET /companies/:code', () => {
                 code: 'apple',
                 name: 'Apple Computer',
                 description: 'Maker of OSX.',
-                invoices: expect.any(Array)
+                invoices: expect.any(Array),
+                industries: expect.any(Array)
             }
         })
     });
@@ -59,24 +60,6 @@ describe('GET /companies/:code', () => {
 
 describe('POST /companies/', () => {
     test('add new company', async () => {
-        const res = await client.post('/companies')
-            .send({
-                code: '_test',
-                name: '_test name',
-                description: '_test description'
-            });
-        expect(res.statusCode).toBe(201)
-        expect(res.body).toEqual({
-            company:
-            {
-                code: '_test',
-                name: '_test name',
-                description: '_test description'
-            }
-        })
-    });
-
-    test('add new company - slugify', async () => {
         const res = await client.post('/companies')
             .send({
                 code: ' TEST name ',

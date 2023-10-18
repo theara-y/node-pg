@@ -18,9 +18,9 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:code', async (req, res, next) => {
     try {
-        const results = await db.query(
+        const invResults = await db.query(
             `
-            SELECT c.*, i.id, i.amt, i.paid, i.add_date, i.paid_date 
+            SELECT c.*, i.id, i.amt, i.paid, i.add_date, i.paid_date
             FROM companies c
             LEFT JOIN invoices i ON i.comp_code = c.code
             WHERE code = $1
@@ -28,19 +28,32 @@ router.get('/:code', async (req, res, next) => {
             [req.params.code]
         )
 
-        if (results.rows.length) {
-            const {code, name, description} = results.rows[0];
+        const indResults = await db.query(
+            `
+            SELECT ind.code, ind.industry
+            FROM companies_industries ic
+            LEFT JOIN industries ind ON ic.industry_code = ind.code
+            WHERE ic.company_code = $1
+            `, 
+            [req.params.code]
+        )
+
+        if (invResults.rows.length !== 0) {
+            const {code, name, description} = invResults.rows[0];
             const result = {
                 code,
                 name,
                 description,
-                invoices: []
+                invoices: [],
+                industries: []
             };
             
-            for (let row of results.rows) {
+            for (let row of invResults.rows) {
                 const {id, amt, paid, add_date, paid_date} = row;
                 result.invoices.push({id, amt, paid, add_date, paid_date})
             }
+
+            result.industries = indResults.rows.map(r => ({code, industry}))
             
             return res.status(200).json({company: result});
         }
