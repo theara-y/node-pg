@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const slugify = require('slugify');
 
 const router = express.Router();
 
@@ -58,7 +59,10 @@ router.post('/', async (req, res, next) => {
             RETURNING code, name, description
             `,
             [
-                req.body.code,
+                slugify(req.body.code, {
+                    lower: true,
+                    locale: 'en'
+                }),
                 req.body.name,
                 req.body.description
             ]

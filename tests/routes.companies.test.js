@@ -76,6 +76,24 @@ describe('POST /companies/', () => {
         })
     });
 
+    test('add new company - slugify', async () => {
+        const res = await client.post('/companies')
+            .send({
+                code: ' TEST name ',
+                name: '_test name',
+                description: '_test description'
+            });
+        expect(res.statusCode).toBe(201)
+        expect(res.body).toEqual({
+            company:
+            {
+                code: 'test-name',
+                name: '_test name',
+                description: '_test description'
+            }
+        })
+    });
+
     test('add new company - invalid request', async () => {
         const res = await client.post('/companies')
             .send({
