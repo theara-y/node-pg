@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "jest tests --coverage",
+    "test": "jest tests",
+    "test-coverage": "jest tests --coverage",
     "start": "node server.js"
   },
   "keywords": [],

@@ -121,7 +121,7 @@ describe('POST /invoices/', () => {
 });
 
 describe('PUT /invoices/:id', () => {
-    test('update invoice by id', async () => {
+    test('update invoice by id - unpaid invoice, not paid', async () => {
         const results = await db.query(
             `
             SELECT id FROM invoices
@@ -131,7 +131,8 @@ describe('PUT /invoices/:id', () => {
         const invoice = results.rows[0];
         const res = await client.put(`/invoices/${invoice.id}`)
             .send({
-                amt: 100
+                amt: 50,
+                paid: false
             });
         expect(res.statusCode).toBe(200)
         expect(res.body).toEqual({
@@ -139,13 +140,95 @@ describe('PUT /invoices/:id', () => {
             {
                 id: expect.any(Number),
                 comp_code: 'apple',
-                amt: 100,
+                amt: 50,
+                paid: false,
+                add_date: expect.any(String),
+                paid_date: null
+            }
+        })
+    });
+
+    test('update invoice by id - unpaid invoice, paid', async () => {
+        const results = await db.query(
+            `
+            SELECT id FROM invoices
+            WHERE comp_code = 'apple' AND amt = 100
+            `
+        );
+        const invoice = results.rows[0];
+        const res = await client.put(`/invoices/${invoice.id}`)
+            .send({
+                amt: 50,
+                paid: true
+            });
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toEqual({
+            invoice:
+            {
+                id: expect.any(Number),
+                comp_code: 'apple',
+                amt: 50,
                 paid: true,
                 add_date: expect.any(String),
                 paid_date: expect.any(String)
             }
         })
     });
+
+    test('update invoice by id - paid invoice, not paid', async () => {
+        const results = await db.query(
+            `
+            SELECT id FROM invoices
+            WHERE comp_code = 'apple' AND amt = 300
+            `
+        );
+        const invoice = results.rows[0];
+        const res = await client.put(`/invoices/${invoice.id}`)
+            .send({
+                amt: 50,
+                paid: false
+            });
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toEqual({
+            invoice:
+            {
+                id: expect.any(Number),
+                comp_code: 'apple',
+                amt: 50,
+                paid: false,
+                add_date: expect.any(String),
+                paid_date: null
+            }
+        })
+    });
+
+    test('update invoice by id - paid invoice, paid', async () => {
+        const results = await db.query(
+            `
+            SELECT id FROM invoices
+            WHERE comp_code = 'apple' AND amt = 300
+            `
+        );
+        const invoice = results.rows[0];
+        const res = await client.put(`/invoices/${invoice.id}`)
+            .send({
+                amt: 50,
+                paid: true
+            });
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toEqual({
+            invoice:
+            {
+                id: expect.any(Number),
+                comp_code: 'apple',
+                amt: 50,
+                paid: true,
+                add_date: expect.any(String),
+                paid_date: expect.any(String)
+            }
+        })
+    });
+
 
     test('update invoice by id - not found', async () => {
         const res = await client.put('/invoices/-1')

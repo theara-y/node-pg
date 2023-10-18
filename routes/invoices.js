@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const ExpressError = require('../expressError');
 
 const router = express.Router();
 
@@ -71,21 +72,41 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
     try {
+        const id = req.params.id;
+        const { amt, paid: paidReq } = req.body;
+        let newPaidDate = null;
+
+        const paidResult = await db.query(
+            `
+            SELECT paid, paid_date FROM invoices
+            WHERE id = $1
+            `,
+            [id]
+        )
+
+        if (paidResult.rows.length === 0) {
+            throw new ExpressError(`Invoice not found: ${id}`, 404)
+        }
+    
+        const {paidRes, paidDateRes} = paidResult.rows[0]
+        if (!paidDateRes && paidReq)
+            newPaidDate = new Date();
+        else if (!paidReq)
+            newPaidDate = null;
+        else
+            newPaidDate = paidDateRes
+    
         const results = await db.query(
             `
             UPDATE invoices
-            SET amt = $2, paid = true, paid_date = CURRENT_DATE
+            SET amt = $2, paid = $3, paid_date = $4
             WHERE id = $1
             RETURNING id, comp_code, amt, paid, add_date, paid_date
             `,
-            [
-                req.params.id,
-                req.body.amt
-            ]
+            [id, amt, paidReq, newPaidDate]
         );
-        if (results.rows.length)
-            return res.status(200).json({invoice: results.rows[0]})
-        return next();
+
+        return res.status(200).json({invoice: results.rows[0]})
     } catch(err) {
         return next(err);
     }
